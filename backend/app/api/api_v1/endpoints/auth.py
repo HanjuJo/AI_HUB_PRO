@@ -22,7 +22,13 @@ def login_access_token(
     OAuth2 compatible token login, get an access token for future requests
     """
     user = db.query(User).filter(User.email == form_data.username).first()
-    if not user or not user.verify_password(form_data.password):
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    if not user.verify_password(form_data.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
