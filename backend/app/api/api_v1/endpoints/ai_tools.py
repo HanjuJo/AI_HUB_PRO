@@ -1,6 +1,6 @@
 from typing import Any, List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from app import schemas
@@ -132,7 +132,7 @@ def update_ai_tool(
     return ai_tool
 
 
-@router.delete("/{ai_tool_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{ai_tool_id}", status_code=status.HTTP_200_OK)
 def delete_ai_tool(
     *,
     db: Session = Depends(deps.get_db),
@@ -150,7 +150,8 @@ def delete_ai_tool(
         )
     db.delete(ai_tool)
     db.commit()
-    return None
+    return {
+}
 
 
 # Category endpoints

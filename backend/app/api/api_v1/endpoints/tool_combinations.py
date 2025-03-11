@@ -135,7 +135,7 @@ def update_tool_combination(
     return tool_combination
 
 
-@router.delete("/{tool_combination_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{tool_combination_id}", status_code=status.HTTP_200_OK)
 def delete_tool_combination(
     *,
     db: Session = Depends(deps.get_db),
@@ -157,7 +157,7 @@ def delete_tool_combination(
         )
     db.delete(tool_combination)
     db.commit()
-    return None
+    return {"detail": "Tool combination deleted successfully"}
 
 
 @router.get("/recommend/{content_type}", response_model=List[schemas.tool_combination.ToolCombination])
