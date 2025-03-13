@@ -72,25 +72,28 @@ export default {
         isLoading.value = true
         error.value = ''
 
-        // 실제 구현에서는 백엔드 API를 호출합니다
-        // const response = await axios.post('/api/v1/auth/login/access-token', {
-        //   username: email.value,
-        //   password: password.value
-        // })
+        // OAuth2 형식에 맞게 form-urlencoded 형식으로 데이터 전송
+        const formData = new URLSearchParams()
+        formData.append('username', email.value)
+        formData.append('password', password.value)
         
-        // 테스트용 모의 응답
-        const response = { data: { access_token: 'test_token', token_type: 'bearer' } }
+        console.log('로그인 요청 URL:', 'http://localhost:8000/api/v1/auth/login/access-token')
         
-        // 토큰 저장
+        const response = await axios.post('http://localhost:8000/api/v1/auth/login/access-token', formData, {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        })
+        
         const token = response.data.access_token
         localStorage.setItem('token', token)
         
-        // 사용자 정보 가져오기 (실제 구현에서는 API 호출)
-        // const userResponse = await axios.get('/api/v1/users/me', {
-        //   headers: { Authorization: `Bearer ${token}` }
-        // })
+        const userResponse = await axios.get('http://localhost:8000/api/v1/users/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
         
-        // 로그인 성공 후 대시보드로 이동
+        localStorage.setItem('user', JSON.stringify(userResponse.data))
+        
         router.push('/dashboard')
       } catch (err) {
         console.error('로그인 오류:', err)

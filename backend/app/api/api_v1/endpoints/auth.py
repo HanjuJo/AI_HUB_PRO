@@ -21,7 +21,10 @@ def login_access_token(
     """
     OAuth2 compatible token login, get an access token for future requests
     """
+    logger = logging.getLogger(__name__)
+    logger.info(f"Login attempt for user: {form_data.username}")
     user = db.query(User).filter(User.email == form_data.username).first()
+    logger.info(f"User found: {user is not None}")
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

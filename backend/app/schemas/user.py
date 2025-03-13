@@ -32,7 +32,17 @@ class UserInDBBase(UserBase):
 
 # Additional properties to return via API
 class User(UserInDBBase):
-    pass
+    class Config:
+        from_attributes = True
+        json_schema_extra = {
+            "example": {
+                "email": "user@example.com",
+                "username": "username",
+                "is_active": True,
+                "is_superuser": False,
+                "id": 1
+            }
+        }
 
 
 # Additional properties stored in DB

@@ -145,20 +145,38 @@ export default {
         isLoading.value = true
         error.value = ''
 
-        // 실제 구현에서는 백엔드 API를 호출합니다
-        // const response = await axios.post('/api/v1/users/', {
-        //   username: username.value,
-        //   email: email.value,
-        //   password: password.value
-        // })
+        console.log('회원가입 시도 중...')
+
+        // 백엔드 API 호출 - 기본 요청
+        const userData = {
+          username: username.value,
+          email: email.value,
+          password: password.value
+        }
+
+        console.log('요청 URL:', 'http://localhost:8000/api/v1/users/')
+        
+        // 직접 서버 URL을 사용하여 요청
+        const response = await axios.post('http://localhost:8000/api/v1/users/', userData, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        
+        console.log('회원가입 성공:', response.data)
         
         // 회원가입 성공 후 로그인 페이지로 이동
         router.push('/login')
       } catch (err) {
         console.error('회원가입 오류:', err)
-        if (err.response && err.response.data) {
+        if (err.response) {
+          console.error('서버 응답:', err.response.status, err.response.data)
           error.value = err.response.data.detail || '회원가입 중 오류가 발생했습니다.'
+        } else if (err.request) {
+          console.error('서버에서 응답이 없습니다:', err.request)
+          error.value = '서버에 연결할 수 없습니다.'
         } else {
+          console.error('요청 설정 오류:', err.message)
           error.value = '회원가입 중 오류가 발생했습니다.'
         }
       } finally {

@@ -68,14 +68,26 @@ export default {
     const user = ref(null)
     const isLoggedIn = computed(() => !!user.value)
 
-    // 
-    const logout = () => {
-      user.value = null
-      localStorage.removeItem('token')
-      router.push('/login')
+    const logout = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        if (token) {
+          // 백엔드에 로그아웃 요청 전송 (실제 구현 시 사용)
+          // await axios.post('http://localhost:8000/api/v1/auth/logout', {}, {
+          //   headers: { Authorization: `Bearer ${token}` }
+          // })
+        }
+      } catch (err) {
+        console.error('로그아웃 오류:', err)
+      } finally {
+        // 로컬 상태 초기화
+        user.value = null
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+        router.push('/login')
+      }
     }
 
-    // 
     const checkAuth = () => {
       const token = localStorage.getItem('token')
       if (token) {
@@ -87,6 +99,15 @@ export default {
     }
 
     checkAuth()
+
+    // Add route guard to prevent access to dashboard without authentication
+    router.beforeEach((to, from, next) => {
+      if (to.path === '/dashboard' && !isLoggedIn.value) {
+        next('/login')
+      } else {
+        next()
+      }
+    })
 
     return {
       user,

@@ -25,6 +25,12 @@ def read_users(
     return users
 
 
+import logging
+import traceback
+from pydantic import ValidationError
+
+logger = logging.getLogger(__name__)
+
 @router.post("/", response_model=schemas.user.User)
 def create_user(
     *,
@@ -34,28 +40,65 @@ def create_user(
     """
     Create new user.
     """
-    user = db.query(User).filter(User.email == user_in.email).first()
-    if user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="The user with this email already exists in the system.",
+    try:
+        logger.info(f"Attempting to create user with email: {user_in.email} and username: {user_in.username}")
+        
+        # 이메일 중복 확인
+        user = db.query(User).filter(User.email == user_in.email).first()
+        if user:
+            logger.warning(f"User with email {user_in.email} already exists")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="The user with this email already exists in the system.",
+            )
+        
+        # 사용자 이름 중복 확인
+        user = db.query(User).filter(User.username == user_in.username).first()
+        if user:
+            logger.warning(f"User with username {user_in.username} already exists")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="The user with this username already exists in the system.",
+            )
+        
+        # 사용자 생성
+        logger.info("Creating new user object")
+        user = User(
+            email=user_in.email,
+            username=user_in.username,
+            is_superuser=False,  # 일반 회원가입에서는 항상 False
+            is_active=True,      # 기본적으로 활성화된 상태로 생성
         )
-    user = db.query(User).filter(User.username == user_in.username).first()
-    if user:
+        
+        # 비밀번호 설정
+        logger.info("Setting password hash")
+        user.set_password(user_in.password)
+        
+        # DB에 사용자 추가 및 저장
+        logger.info("Adding user to database")
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        
+        logger.info(f"Successfully created user with ID: {user.id}")
+        return jsonable_encoder(user.to_dict())
+        
+    except ValidationError as e:
+        logger.error(f"Validation error: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="The user with this username already exists in the system.",
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Validation error: {str(e)}",
         )
-    user = User(
-        email=user_in.email,
-        username=user_in.username,
-        is_superuser=user_in.is_superuser,
-    )
-    user.set_password(user_in.password)
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
+    except HTTPException as e:
+        logger.error(f"HTTP error creating user: {str(e)}")
+        raise e
+    except Exception as e:
+        logger.error(f"Unexpected error creating user: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred: {str(e)}",
+        )
 
 
 @router.get("/me", response_model=schemas.user.User)
@@ -65,7 +108,7 @@ def read_user_me(
     """
     Get current user.
     """
-    return current_user
+    return jsonable_encoder(current_user.to_dict())
 
 
 @router.put("/me", response_model=schemas.user.User)
