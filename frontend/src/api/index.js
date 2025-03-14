@@ -37,8 +37,15 @@ api.interceptors.response.use(
 );
 
 export const auth = {
-  login: (credentials) => api.post('/auth/login', credentials),
+  login: (credentials) => api.post('/auth/login/access-token', credentials, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+  }),
   register: (userData) => api.post('/auth/register', userData),
+  getCurrentUser: (token) => api.get('/users/me', {
+    headers: { Authorization: `Bearer ${token}` }
+  }),
 };
 
 export const content = {

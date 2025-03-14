@@ -55,8 +55,8 @@
 <script>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
 import { useStore } from 'vuex'
+import { auth } from '@/api'
 
 export default {
   name: 'Login',
@@ -79,19 +79,10 @@ export default {
         formData.append('username', email.value)
         formData.append('password', password.value)
         
-        console.log('로그인 요청 URL:', 'http://localhost:8004/api/v1/auth/login/access-token')
-        
-        const response = await axios.post('http://localhost:8004/api/v1/auth/login/access-token', formData, {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-          }
-        })
-        
+        const response = await auth.login(formData)
         const token = response.data.access_token
         
-        const userResponse = await axios.get('http://localhost:8004/api/v1/users/me', {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        const userResponse = await auth.getCurrentUser(token)
         
         // 로그인 성공 후 사용자 정보와 토큰을 함께 저장
         store.dispatch('login', {
