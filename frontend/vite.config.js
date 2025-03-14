@@ -7,7 +7,7 @@ export default defineConfig(({ command, mode }) => {
   
   return {
     plugins: [vue()],
-    base: '/',
+    base: './',
     server: {
       proxy: {
         '/api': {

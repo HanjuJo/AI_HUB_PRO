@@ -67,7 +67,7 @@ const routes = [
 
 // 라우터 생성
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes
 })
 
