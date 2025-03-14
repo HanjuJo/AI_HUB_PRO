@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.api_v1.api import api_router
 from app.core.config import settings
+from app.db.session import SessionLocal
+from app.db.init_db import init_db
 import nltk
 
 # NLTK 데이터 초기화
@@ -11,6 +13,15 @@ try:
 except LookupError:
     nltk.download('punkt')
     nltk.download('stopwords')
+
+# 데이터베이스 초기화
+db = SessionLocal()
+try:
+    init_db(db)
+except Exception as e:
+    print(f"데이터베이스 초기화 오류: {e}")
+finally:
+    db.close()
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
