@@ -9,7 +9,7 @@ const Profile = () => import('../views/Profile.vue')
 const AITools = () => import('../views/AITools.vue')
 const ToolCombinations = () => import('../views/ToolCombinations.vue')
 const YoutubeData = () => import('../views/YoutubeData.vue')
-const ContentOptimization = () => import('../views/ContentOptimization.vue')
+
 const NotFound = () => import('../views/NotFound.vue')
 
 // 라우트 정의
@@ -57,12 +57,7 @@ const routes = [
     name: 'YoutubeData',
     component: YoutubeData
   },
-  {
-    path: '/content-optimization',
-    name: 'ContentOptimization',
-    component: ContentOptimization,
-    meta: { requiresAuth: true }
-  },
+
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
