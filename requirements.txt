@@ -11,5 +11,9 @@ requests
 google-api-python-client
 email-validator
 
-# 추가 유틸리티 패키지
+# 자연어 처리 및 분석
+textblob
+nltk
+
+# 유튜브 데이터 추출
 pytube
