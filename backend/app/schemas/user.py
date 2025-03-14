@@ -1,5 +1,5 @@
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 
 # Shared properties
@@ -8,6 +8,8 @@ class UserBase(BaseModel):
     username: Optional[str] = None
     is_active: Optional[bool] = True
     is_superuser: bool = False
+    
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Properties to receive via API on creation
@@ -26,15 +28,12 @@ class UserUpdate(UserBase):
 class UserInDBBase(UserBase):
     id: Optional[int] = None
 
-    class Config:
-        from_attributes = True
-
 
 # Additional properties to return via API
 class User(UserInDBBase):
-    class Config:
-        from_attributes = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
             "example": {
                 "email": "user@example.com",
                 "username": "username",
@@ -43,6 +42,7 @@ class User(UserInDBBase):
                 "id": 1
             }
         }
+    )
 
 
 # Additional properties stored in DB
