@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AI Hub Pro - 페이지를 찾을 수 없습니다</title>
+  <script>
+    // GitHub Pages에서 SPA 라우팅을 위한 리다이렉트
+    (function(){
+      var redirect = sessionStorage.redirect;
+      delete sessionStorage.redirect;
+      if (redirect && redirect !== location.href) {
+        history.replaceState(null, null, redirect);
+      }
+    })();
+  </script>
+</head>
+<body>
+</body>
+</html>
