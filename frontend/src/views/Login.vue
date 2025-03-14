@@ -56,7 +56,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
-import { auth } from '../api'
+import { auth } from '@/api'
 
 export default {
   name: 'Login',
@@ -93,7 +93,13 @@ export default {
         router.push('/dashboard')
       } catch (err) {
         console.error('로그인 오류:', err)
-        error.value = '이메일 또는 비밀번호가 올바르지 않습니다.'
+        if (err.response?.status === 401) {
+          error.value = '이메일 또는 비밀번호가 올바르지 않습니다.'
+        } else if (err.response?.status === 422) {
+          error.value = '입력 데이터가 유효하지 않습니다.'
+        } else {
+          error.value = '서버 오류가 발생했습니다. 다시 시도해주세요.'
+        }
       } finally {
         isLoading.value = false
       }
