@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     # BACKEND_CORS_ORIGINS is a JSON-formatted list of origins
     # e.g: '["http://localhost", "http://localhost:4200", "http://localhost:3000", \
     # "http://localhost:8080", "http://local.dockertoolbox.tiangolo.com"]'
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = ["http://localhost:3000", "http://localhost:5173"]
+    BACKEND_CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:5173", "https://aihubpro1.netlify.app"]
 
     @validator("BACKEND_CORS_ORIGINS", pre=True)
     @classmethod
@@ -27,7 +27,13 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "AI HUB"
     
     # SQLite 설정
-    SQLALCHEMY_DATABASE_URI: str = "sqlite:////Users/soriul79/AI_HUB_ProJect/backend/app.db"
+    SQLALCHEMY_DATABASE_URI: str = "sqlite:///./app.db"
+    
+    @validator("SQLALCHEMY_DATABASE_URI", pre=True)
+    def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
+        if isinstance(v, str):
+            return v
+        return "sqlite:///./app.db"
 
     # YouTube API 설정
     YOUTUBE_API_KEY: str = ""
