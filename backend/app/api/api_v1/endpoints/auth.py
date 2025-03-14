@@ -1,5 +1,6 @@
 from datetime import timedelta
 from typing import Any
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -56,3 +57,32 @@ def test_token(current_user: User = Depends(deps.get_current_user)) -> Any:
     Test access token
     """
     return current_user
+
+@router.post("/register", response_model=schemas.user.User)
+def register(*, db: Session = Depends(deps.get_db), user_in: schemas.user.UserCreate) -> Any:
+    """
+    Register new user.
+    """
+    logger = logging.getLogger(__name__)
+    logger.info(f"Registration attempt for email: {user_in.email}")
+    
+    user = db.query(User).filter(User.email == user_in.email).first()
+    if user:
+        raise HTTPException(
+            status_code=400,
+            detail="The user with this email already exists in the system.",
+        )
+    
+    user = User(
+        email=user_in.email,
+        username=user_in.username,
+        is_active=True,
+    )
+    user.set_password(user_in.password)
+    
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    
+    logger.info(f"Successfully registered user: {user.email}")
+    return user

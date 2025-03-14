@@ -147,17 +147,17 @@ export default {
 
         console.log('회원가입 시도 중...')
 
-        // 백엔드 API 호출 - 기본 요청
+        // 백엔드 API 호출
         const userData = {
-          username: username.value,
           email: email.value,
-          password: password.value
+          password: password.value,
+          username: username.value
         }
 
-        console.log('요청 URL:', 'http://localhost:8000/api/v1/users/')
+        console.log('요청 URL:', 'http://localhost:8004/api/v1/auth/register')
         
-        // 직접 서버 URL을 사용하여 요청
-        const response = await axios.post('http://localhost:8000/api/v1/users/', userData, {
+        // 회원가입 요청
+        const response = await axios.post('http://localhost:8004/api/v1/auth/register', userData, {
           headers: {
             'Content-Type': 'application/json'
           }

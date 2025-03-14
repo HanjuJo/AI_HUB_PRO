@@ -56,6 +56,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { useStore } from 'vuex'
 
 export default {
   name: 'Login',
@@ -66,6 +67,7 @@ export default {
     const rememberMe = ref(false)
     const isLoading = ref(false)
     const error = ref('')
+    const store = useStore()
 
     const handleSubmit = async () => {
       try {
@@ -77,22 +79,25 @@ export default {
         formData.append('username', email.value)
         formData.append('password', password.value)
         
-        console.log('로그인 요청 URL:', 'http://localhost:8000/api/v1/auth/login/access-token')
+        console.log('로그인 요청 URL:', 'http://localhost:8004/api/v1/auth/login/access-token')
         
-        const response = await axios.post('http://localhost:8000/api/v1/auth/login/access-token', formData, {
+        const response = await axios.post('http://localhost:8004/api/v1/auth/login/access-token', formData, {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
           }
         })
         
         const token = response.data.access_token
-        localStorage.setItem('token', token)
         
-        const userResponse = await axios.get('http://localhost:8000/api/v1/users/me', {
+        const userResponse = await axios.get('http://localhost:8004/api/v1/users/me', {
           headers: { Authorization: `Bearer ${token}` }
         })
         
-        localStorage.setItem('user', JSON.stringify(userResponse.data))
+        // 로그인 성공 후 사용자 정보와 토큰을 함께 저장
+        store.dispatch('login', {
+          user: userResponse.data,
+          token: token
+        })
         
         router.push('/dashboard')
       } catch (err) {

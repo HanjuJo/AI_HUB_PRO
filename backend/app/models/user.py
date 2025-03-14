@@ -20,6 +20,7 @@ class User(Base):
     
     # Relationships
     tool_combinations = relationship("ToolCombination", back_populates="user")
+    contents = relationship("Content", back_populates="user")
     
     def set_password(self, password: str) -> None:
         self.password_hash = get_password_hash(password)

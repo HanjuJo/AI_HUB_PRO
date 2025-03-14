@@ -20,6 +20,9 @@
             <li class="nav-item">
               <router-link class="nav-link" to="/youtube-data">유튜브 데이터</router-link>
             </li>
+            <li class="nav-item">
+              <router-link class="nav-link" to="/content-optimization">콘텐츠 최적화</router-link>
+            </li>
           </ul>
           <ul class="navbar-nav">
             <li class="nav-item" v-if="!isLoggedIn">
@@ -29,16 +32,28 @@
               <router-link class="nav-link" to="/register">회원가입</router-link>
             </li>
             <li class="nav-item dropdown" v-if="isLoggedIn">
-              <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                {{ user.username }}
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li><router-link class="dropdown-item" to="/dashboard">내 대시보드</router-link></li>
-                <li><router-link class="dropdown-item" to="/profile">내 정보</router-link></li>
-                <li><router-link class="dropdown-item" to="/ai-tools">내 도구함</router-link></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#" @click.prevent="logout">로그아웃</a></li>
-              </ul>
+              <button class="nav-link dropdown-toggle btn btn-link" @click="toggleDropdown">
+                <i class="bi bi-person-circle me-1"></i>
+                {{ user?.username || '사용자' }}
+              </button>
+              <div class="dropdown-menu dropdown-menu-end" :class="{ show: isDropdownOpen }" @click.stop>
+                <router-link class="dropdown-item" to="/dashboard" @click="closeDropdown">
+                  <i class="bi bi-speedometer2 me-2"></i>개인 대시보드
+                </router-link>
+                <router-link class="dropdown-item" to="/profile" @click="closeDropdown">
+                  <i class="bi bi-person-circle me-2"></i>내 정보
+                </router-link>
+                <router-link class="dropdown-item" to="/ai-tools" @click="closeDropdown">
+                  <i class="bi bi-tools me-2"></i>내 AI 도구함
+                </router-link>
+                <router-link class="dropdown-item" to="/support" @click="closeDropdown">
+                  <i class="bi bi-question-circle me-2"></i>문의사항
+                </router-link>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item text-danger" href="#" @click.prevent="handleLogout">
+                  <i class="bi bi-box-arrow-right me-2"></i>로그아웃
+                </a>
+              </div>
             </li>
           </ul>
         </div>
@@ -58,61 +73,65 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useStore } from 'vuex'
+
+
 
 export default {
   name: 'App',
+
   setup() {
     const router = useRouter()
-    const user = ref(null)
-    const isLoggedIn = computed(() => !!user.value)
+    const store = useStore()
+    const isDropdownOpen = ref(false)
 
-    const logout = async () => {
+    const user = computed(() => store.getters.currentUser)
+    const isLoggedIn = computed(() => store.getters.isAuthenticated)
+
+    const toggleDropdown = () => {
+      isDropdownOpen.value = !isDropdownOpen.value
+    }
+
+    const closeDropdown = () => {
+      isDropdownOpen.value = false
+    }
+
+    const handleClickOutside = (event) => {
+      const dropdown = document.querySelector('.dropdown')
+      if (dropdown && !dropdown.contains(event.target)) {
+        closeDropdown()
+      }
+    }
+
+    onMounted(() => {
+      document.addEventListener('click', handleClickOutside)
+    })
+
+    onUnmounted(() => {
+      document.removeEventListener('click', handleClickOutside)
+    })
+
+    const handleLogout = async () => {
       try {
-        const token = localStorage.getItem('token')
-        if (token) {
-          // 백엔드에 로그아웃 요청 전송 (실제 구현 시 사용)
-          // await axios.post('http://localhost:8000/api/v1/auth/logout', {}, {
-          //   headers: { Authorization: `Bearer ${token}` }
-          // })
-        }
+        await store.dispatch('logout')
+        closeDropdown()
+        router.push('/login')
       } catch (err) {
         console.error('로그아웃 오류:', err)
-      } finally {
-        // 로컬 상태 초기화
-        user.value = null
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-        router.push('/login')
       }
     }
 
-    const checkAuth = () => {
-      const token = localStorage.getItem('token')
-      if (token) {
-        const userData = localStorage.getItem('user')
-        if (userData) {
-          user.value = JSON.parse(userData)
-        }
-      }
-    }
 
-    checkAuth()
-
-    // Add route guard to prevent access to dashboard without authentication
-    router.beforeEach((to, from, next) => {
-      if (to.path === '/dashboard' && !isLoggedIn.value) {
-        next('/login')
-      } else {
-        next()
-      }
-    })
 
     return {
       user,
       isLoggedIn,
-      logout
+      isDropdownOpen,
+      toggleDropdown,
+      closeDropdown,
+      handleLogout
     }
   }
 }
@@ -131,5 +150,65 @@ export default {
 
 .footer {
   margin-top: auto;
+}
+
+/* 드롭다운 메뉴 스타일 */
+.dropdown {
+  position: relative;
+}
+
+.dropdown-toggle {
+  background: none;
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+}
+
+.dropdown-toggle:hover,
+.dropdown-toggle:focus {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  min-width: 200px;
+  padding: 0.5rem 0;
+  margin: 0.125rem 0 0;
+  background-color: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 0.25rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+}
+
+.dropdown-menu.show {
+  display: block;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  color: #212529;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+  transform: translateX(5px);
+}
+
+.dropdown-item.text-danger:hover {
+  background-color: #dc3545;
+  color: white;
+}
+
+.dropdown-divider {
+  border-top: 1px solid #e9ecef;
+  margin: 0.5rem 0;
 }
 </style>

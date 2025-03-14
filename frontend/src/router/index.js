@@ -9,6 +9,7 @@ const Profile = () => import('../views/Profile.vue')
 const AITools = () => import('../views/AITools.vue')
 const ToolCombinations = () => import('../views/ToolCombinations.vue')
 const YoutubeData = () => import('../views/YoutubeData.vue')
+const ContentOptimization = () => import('../views/ContentOptimization.vue')
 const NotFound = () => import('../views/NotFound.vue')
 
 // 라우트 정의
@@ -57,6 +58,12 @@ const routes = [
     component: YoutubeData
   },
   {
+    path: '/content-optimization',
+    name: 'ContentOptimization',
+    component: ContentOptimization,
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: NotFound
@@ -70,11 +77,15 @@ const router = createRouter({
 })
 
 // 네비게이션 가드 설정
+import store from '../store'
+
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = !!localStorage.getItem('token')
+  const isAuthenticated = store.getters.isAuthenticated
   
   if (to.meta.requiresAuth && !isAuthenticated) {
     next('/login')
+  } else if ((to.path === '/login' || to.path === '/register') && isAuthenticated) {
+    next('/dashboard')
   } else {
     next()
   }
