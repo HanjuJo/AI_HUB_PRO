@@ -75,37 +75,58 @@ export default {
         error.value = ''
 
         // OAuth2 형식에 맞게 form-urlencoded 형식으로 데이터 전송
+        // 로그인 시도 로그 추가
+        console.log('로그인 시도:', { email: email.value })
+        
         const formData = new URLSearchParams()
         formData.append('username', email.value)
         formData.append('password', password.value)
         
+        // 로그인 요청 전송
         const response = await auth.login(formData)
-        const token = response.data.access_token
+        console.log('로그인 응답:', response.data)
         
-        // 토큰을 로컬 스토리지에 저장
+        const token = response.data.access_token
+        if (!token) {
+          throw new Error('토큰이 없습니다')
+        }
+        
+        // 토큰 저장
         localStorage.setItem('token', token)
         
-        // 토큰이 설정된 후 사용자 정보 요청
+        // 사용자 정보 요청
         const userResponse = await auth.getCurrentUser()
+        console.log('사용자 정보:', userResponse.data)
         
-        // 로그인 성공 후 사용자 정보와 토큰을 함께 저장
-        store.dispatch('login', {
+        // 상태 관리
+        await store.dispatch('login', {
           user: userResponse.data,
           token: token
         })
         
         // 네비게이션 메뉴 상태 초기화
-        store.dispatch('setMenuState', true)
+        await store.dispatch('setMenuState', true)
         
         router.push('/dashboard')
       } catch (err) {
         console.error('로그인 오류:', err)
-        if (err.response?.status === 401) {
-          error.value = '이메일 또는 비밀번호가 올바르지 않습니다.'
-        } else if (err.response?.status === 422) {
-          error.value = '입력 데이터가 유효하지 않습니다.'
+        
+        if (err.response) {
+          console.error('서버 응답:', err.response.data)
+          
+          if (err.response.status === 401) {
+            error.value = '이메일 또는 비밀번호가 올바르지 않습니다.'
+          } else if (err.response.status === 422) {
+            error.value = '입력 데이터가 유효하지 않습니다.'
+          } else if (err.response.status === 400) {
+            error.value = '비활성화된 사용자입니다.'
+          } else {
+            error.value = '서버 오류가 발생했습니다. 다시 시도해주세요.'
+          }
+        } else if (err.message === '토큰이 없습니다') {
+          error.value = '로그인에 실패했습니다. 다시 시도해주세요.'
         } else {
-          error.value = '서버 오류가 발생했습니다. 다시 시도해주세요.'
+          error.value = '서버에 연결할 수 없습니다.'
         }
       } finally {
         isLoading.value = false
