@@ -82,13 +82,20 @@ export default {
         const response = await auth.login(formData)
         const token = response.data.access_token
         
-        const userResponse = await auth.getCurrentUser(token)
+        // 토큰을 로컬 스토리지에 저장
+        localStorage.setItem('token', token)
+        
+        // 토큰이 설정된 후 사용자 정보 요청
+        const userResponse = await auth.getCurrentUser()
         
         // 로그인 성공 후 사용자 정보와 토큰을 함께 저장
         store.dispatch('login', {
           user: userResponse.data,
           token: token
         })
+        
+        // 네비게이션 메뉴 상태 초기화
+        store.dispatch('setMenuState', true)
         
         router.push('/dashboard')
       } catch (err) {

@@ -7,6 +7,15 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true
+});
+
+// 요청 전에 URL이 /auth로 시작하면 Content-Type을 변경
+api.interceptors.request.use(config => {
+  if (config.url?.startsWith('/auth')) {
+    config.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+  }
+  return config;
 });
 
 // 요청 인터셉터 설정
@@ -37,15 +46,9 @@ api.interceptors.response.use(
 );
 
 export const auth = {
-  login: (credentials) => api.post('/auth/login/access-token', credentials, {
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    }
-  }),
+  login: (credentials) => api.post('/auth/login/access-token', credentials),
   register: (userData) => api.post('/auth/register', userData),
-  getCurrentUser: (token) => api.get('/users/me', {
-    headers: { Authorization: `Bearer ${token}` }
-  }),
+  getCurrentUser: () => api.get('/users/me'),
 };
 
 export const content = {
