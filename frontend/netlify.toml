@@ -10,6 +10,12 @@
   from = "/*"
   to = "/index.html"
   status = 200
+  force = true
+
+[[headers]]
+  for = "/*"
+    [headers.values]
+    Access-Control-Allow-Origin = "*"
 
 [build.processing]
   skip_processing = false
@@ -19,5 +25,7 @@
 [build.processing.js]
   bundle = true
   minify = true
+[build.processing.html]
+  pretty_urls = true
 [build.processing.images]
   compress = true
