@@ -56,7 +56,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
-import { auth } from '@/api'
+import { auth } from '../api'
 
 export default {
   name: 'Login',
