@@ -4,27 +4,22 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.config import settings
 
-# PostgreSQL 연결 시도, 실패 시 SQLite 사용
-try:
-    engine = create_engine(str(settings.SQLALCHEMY_DATABASE_URI))
-    # 연결 테스트
-    with engine.connect() as conn:
-        pass
-    print("PostgreSQL 데이터베이스에 연결되었습니다.")
-except Exception as e:
-    print(f"PostgreSQL 연결 실패: {e}")
-    print("SQLite 데이터베이스를 대신 사용합니다.")
+# 데이터베이스 엔진 생성
+engine = create_engine(
+    str(settings.SQLALCHEMY_DATABASE_URI),
+    pool_pre_ping=True,  # 연결 상태 확인
+    connect_args={"check_same_thread": False}  # SQLite를 위한 설정
+)
+
+# 데이터베이스 파일 경로 확인 및 생성 (SQLite 사용 시)
+if settings.SQLALCHEMY_DATABASE_URI.startswith("sqlite"):
+    db_path = settings.SQLALCHEMY_DATABASE_URI.replace("sqlite:///", "")
+    db_dir = os.path.dirname(os.path.abspath(db_path))
     
-    # SQLite 데이터베이스 파일 경로 설정
-    instance_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "instance")
+    if not os.path.exists(db_dir):
+        os.makedirs(db_dir)
+        print(f"Created database directory: {db_dir}")
     
-    # instance 디렉토리가 없는 경우 생성
-    if not os.path.exists(instance_dir):
-        os.makedirs(instance_dir)
-        print(f"Created database directory: {instance_dir}")
-    
-    sqlite_file_path = os.path.join(instance_dir, "ai_hub.db")
-    sqlite_url = f"sqlite:///{sqlite_file_path}"
-    engine = create_engine(sqlite_url)
+    print(f"Using SQLite database at: {db_path}")
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
