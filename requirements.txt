@@ -1,13 +1,14 @@
 fastapi
 uvicorn
 sqlalchemy
-pydantic
+pydantic[email]
 python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
 python-dotenv
 requests
 google-api-python-client
+email-validator
 
 # 추가 유틸리티 패키지
 pytube
