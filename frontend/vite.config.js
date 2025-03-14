@@ -7,7 +7,7 @@ export default defineConfig(({ command, mode }) => {
   
   return {
     plugins: [vue()],
-    base: mode === 'production' ? '/AI_HUB_PRO/' : '/',
+    base: '/',
     server: {
       proxy: {
         '/api': {
