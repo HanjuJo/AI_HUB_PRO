@@ -8,7 +8,8 @@ const Dashboard = () => import('../views/Dashboard.vue')
 const Profile = () => import('../views/Profile.vue')
 const AITools = () => import('../views/AITools.vue')
 const ToolCombinations = () => import('../views/ToolCombinations.vue')
-const YoutubeData = () => import('../views/YoutubeData.vue')
+const YoutubeAnalysis = () => import('../views/YoutubeAnalysis.vue')
+const Support = () => import('../views/Support.vue')
 
 const NotFound = () => import('../views/NotFound.vue')
 
@@ -32,8 +33,7 @@ const routes = [
   {
     path: '/dashboard',
     name: 'Dashboard',
-    component: Dashboard,
-    meta: { requiresAuth: true }
+    component: Dashboard
   },
   {
     path: '/profile',
@@ -49,15 +49,18 @@ const routes = [
   {
     path: '/tool-combinations',
     name: 'ToolCombinations',
-    component: ToolCombinations,
-    meta: { requiresAuth: true }
+    component: ToolCombinations
   },
   {
-    path: '/youtube-data',
-    name: 'YoutubeData',
-    component: YoutubeData
+    path: '/youtube-analysis',
+    name: 'YoutubeAnalysis',
+    component: YoutubeAnalysis
   },
-
+  {
+    path: '/support',
+    name: 'Support',
+    component: Support
+  },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
@@ -75,12 +78,10 @@ const router = createRouter({
 import store from '../store'
 
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = store.getters.isAuthenticated
+  const currentUser = store.getters.currentUser
   
-  if (to.meta.requiresAuth && !isAuthenticated) {
+  if (to.meta.requiresAuth && !currentUser) {
     next('/login')
-  } else if ((to.path === '/login' || to.path === '/register') && isAuthenticated) {
-    next('/dashboard')
   } else {
     next()
   }

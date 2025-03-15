@@ -1,13 +1,13 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8004';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8005';
 
 const api = axios.create({
   baseURL: `${API_URL}/api/v1`,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true
+  withCredentials: false
 });
 
 // 요청 전에 URL이 /auth로 시작하면 Content-Type을 변경

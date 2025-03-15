@@ -1,6 +1,16 @@
 <template>
   <div class="dashboard">
-    <h2 class="mb-4">내 대시보드</h2>
+    <!-- 환영 배너 -->
+    <div class="welcome-banner mb-4">
+      <h2 class="welcome-title">
+        <i class="bi bi-person-circle me-2"></i>
+        {{ currentUser?.username }}님, 환영합니다!
+      </h2>
+      <p class="text-muted mb-0">
+        <i class="bi bi-clock-history me-1"></i>
+        접속 시간: {{ formatDate(sessionStartTime) }}
+      </p>
+    </div>
     
     <div class="row">
       <div class="col-md-4 mb-4">
@@ -113,32 +123,41 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import { ref, onMounted, computed } from 'vue';
+import { useStore } from 'vuex';
+import axios from 'axios';
 
 export default {
   name: 'Dashboard',
   setup() {
-    const toolCombinations = ref([])
-    const recentActivities = ref([])
-    const recommendedTools = ref([])
+    const store = useStore();
+    const currentUser = computed(() => store.getters.currentUser);
+    const sessionStartTime = ref(currentUser.value?.created_at || new Date().toISOString());
+    const toolCombinations = ref([]);
+    const recentActivities = ref([]);
+    const recommendedTools = ref([]);
 
     // 날짜 포맷 함수
     const formatDate = (dateString) => {
-      const date = new Date(dateString)
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '';
+      
       return date.toLocaleDateString('ko-KR', {
         year: 'numeric',
         month: 'long',
-        day: 'numeric'
-      })
-    }
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    };
 
     // 도구 조합 로드
     const loadToolCombinations = async () => {
       try {
         // 실제 구현에서는 API에서 데이터를 가져옵니다
-        // const response = await axios.get('/api/v1/tool-combinations/me')
-        // toolCombinations.value = response.data
+        // const response = await axios.get('/api/v1/tool-combinations/me');
+        // toolCombinations.value = response.data;
         
         // 테스트 데이터
         toolCombinations.value = [
@@ -164,18 +183,18 @@ export default {
               { id: 5, name: 'Canva' }
             ]
           }
-        ]
+        ];
       } catch (error) {
-        console.error('도구 조합을 가져오는 중 오류가 발생했습니다:', error)
+        console.error('도구 조합을 가져오는 중 오류가 발생했습니다:', error);
       }
-    }
+    };
 
     // 최근 활동 로드
     const loadActivities = async () => {
       try {
         // 실제 구현에서는 API에서 데이터를 가져옵니다
-        // const response = await axios.get('/api/v1/users/me/activities')
-        // recentActivities.value = response.data
+        // const response = await axios.get('/api/v1/users/me/activities');
+        // recentActivities.value = response.data;
         
         // 테스트 데이터
         recentActivities.value = [
@@ -194,18 +213,18 @@ export default {
             description: '유튜브 데이터 분석을 실행했습니다.',
             timestamp: '2025-02-25T10:20:00Z'
           }
-        ]
+        ];
       } catch (error) {
-        console.error('최근 활동을 가져오는 중 오류가 발생했습니다:', error)
+        console.error('최근 활동을 가져오는 중 오류가 발생했습니다:', error);
       }
-    }
+    };
 
     // 추천 AI 도구 로드
     const loadRecommendations = async () => {
       try {
         // 실제 구현에서는 API에서 데이터를 가져옵니다
-        // const response = await axios.get('/api/v1/ai-tools/recommendations')
-        // recommendedTools.value = response.data
+        // const response = await axios.get('/api/v1/ai-tools/recommendations');
+        // recommendedTools.value = response.data;
         
         // 테스트 데이터
         recommendedTools.value = [
@@ -238,26 +257,89 @@ export default {
               { id: 5, name: '비디오 편집' }
             ]
           }
-        ]
+        ];
       } catch (error) {
-        console.error('추천 AI 도구를 가져오는 중 오류가 발생했습니다:', error)
+        console.error('추천 AI 도구를 가져오는 중 오류가 발생했습니다:', error);
       }
-    }
+    };
 
     onMounted(() => {
-      loadToolCombinations()
-      loadActivities()
-      loadRecommendations()
-    })
+      loadToolCombinations();
+      loadActivities();
+      loadRecommendations();
+    });
 
     return {
+      currentUser,
+      sessionStartTime,
       toolCombinations,
       recentActivities,
       recommendedTools,
       formatDate,
       loadActivities,
       loadRecommendations
-    }
+    };
   }
-}
+};
 </script>
+
+<style scoped>
+.welcome-banner {
+  background: linear-gradient(135deg, #4dabf7 0%, #3182ce 100%);
+  padding: 2rem;
+  border-radius: 15px;
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.card {
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  padding: 1rem 1.5rem;
+}
+
+.card-title {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.badge {
+  padding: 0.5rem 0.8rem;
+  font-weight: 500;
+}
+
+.list-group-item {
+  border: none;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  background-color: #f8f9fa;
+}
+
+.btn-primary {
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  border-radius: 8px;
+}
+
+.text-muted {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+</style>

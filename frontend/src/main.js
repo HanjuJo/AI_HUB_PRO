@@ -1,57 +1,55 @@
 import { createApp } from 'vue'
-import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
-import axios from 'axios'
 import store from './store'
+import axios from 'axios'
 
-// Bootstrap
-import 'bootstrap/dist/css/bootstrap.css'
-import 'bootstrap-vue-next/dist/bootstrap-vue-next.css'
+// Bootstrap & Icons
+import 'bootstrap/dist/css/bootstrap.min.css'
+import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import 'bootstrap-icons/font/bootstrap-icons.css'
-import * as bootstrap from 'bootstrap'
-
-// Bootstrap 초기화
-const initBootstrap = () => {
-  // 드롭다운 초기화
-  const dropdownElementList = document.querySelectorAll('.dropdown-toggle')
-  const dropdownList = [...dropdownElementList].map(dropdownToggleEl => new bootstrap.Dropdown(dropdownToggleEl))
-}
-
-// 페이지 로드 후 Bootstrap 초기화
-document.addEventListener('DOMContentLoaded', initBootstrap)
 
 // Axios 기본 설정
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8004/api/v1'
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
 
 // Axios 인터셉터 설정
-axios.interceptors.request.use(request => {
-  const token = store.getters.token
-  if (token) {
-    request.headers.Authorization = `Bearer ${token}`
-  }
-  console.log('Starting Request', request.url)
-  return request
-})
-
-axios.interceptors.response.use(
-  response => {
-    console.log('Response:', response.status, response.data)
-    return response
+axios.interceptors.request.use(
+  config => {
+    const token = store.state.token
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
   },
   error => {
-    console.error('Axios 오류:', error.message)
+    console.error('요청 오류:', error)
+    return Promise.reject(error)
+  }
+)
+
+axios.interceptors.response.use(
+  response => response,
+  error => {
     if (error.response) {
-      console.error('Response Error:', error.response.status, error.response.data)
+      if (error.response.status === 401) {
+        store.dispatch('logout')
+        router.push('/login')
+      }
+      console.error('API 오류:', error.response.data)
     }
     return Promise.reject(error)
   }
 )
 
+// Vue 앱 생성
 const app = createApp(App)
 
-app.use(createPinia())
-app.use(router)
-app.use(store)
+// 글로벌 프로퍼티
+app.config.globalProperties.$axios = axios
 
+// 플러그인 등록
+app.use(store)
+app.use(router)
+
+// 앱 마운트
 app.mount('#app')

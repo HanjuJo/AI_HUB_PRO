@@ -1,49 +1,40 @@
 <template>
-  <div class="login-page">
+  <div class="welcome-page">
     <div class="row justify-content-center">
       <div class="col-md-6">
         <div class="card">
           <div class="card-header bg-primary text-white">
-            <h4 class="mb-0">로그인</h4>
+            <h4 class="mb-0">AI HUB에 오신 것을 환영합니다!</h4>
           </div>
           <div class="card-body">
             <div v-if="error" class="alert alert-danger" role="alert">
               {{ error }}
             </div>
             <form @submit.prevent="handleSubmit">
-              <div class="mb-3">
-                <label for="email" class="form-label">이메일</label>
+              <div class="mb-4">
+                <label for="username" class="form-label">사용하실 이름을 입력해주세요</label>
                 <input
-                  type="email"
-                  class="form-control"
-                  id="email"
-                  v-model="email"
+                  type="text"
+                  class="form-control form-control-lg"
+                  id="username"
+                  v-model="username"
                   required
-                  placeholder="이메일을 입력하세요"
+                  placeholder="이름을 입력하세요"
+                  :class="{ 'is-invalid': error }"
                 />
+                <div class="form-text text-muted">
+                  입력하신 이름으로 AI HUB의 모든 기능을 무료로 이용하실 수 있습니다.
+                </div>
               </div>
-              <div class="mb-3">
-                <label for="password" class="form-label">비밀번호</label>
-                <input
-                  type="password"
-                  class="form-control"
-                  id="password"
-                  v-model="password"
-                  required
-                  placeholder="비밀번호를 입력하세요"
-                />
-              </div>
-              <div class="mb-3 form-check">
-                <input type="checkbox" class="form-check-input" id="rememberMe" v-model="rememberMe">
-                <label class="form-check-label" for="rememberMe">로그인 상태 유지</label>
-              </div>
-              <button type="submit" class="btn btn-primary w-100" :disabled="isLoading">
+              <button type="submit" class="btn btn-primary btn-lg w-100" :disabled="isLoading || !username.trim()">
                 <span v-if="isLoading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                로그인
+                시작하기
               </button>
             </form>
-            <div class="mt-3 text-center">
-              <p>계정이 없으신가요? <router-link to="/register">회원가입</router-link></p>
+            <div class="mt-4 text-center">
+              <p class="text-muted">
+                * 세션이 종료되면 입력하신 정보는 초기화됩니다.
+              </p>
             </div>
           </div>
         </div>
@@ -56,87 +47,53 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
-import { auth } from '@/api'
 
 export default {
   name: 'Login',
   setup() {
     const router = useRouter()
-    const email = ref('')
-    const password = ref('')
-    const rememberMe = ref(false)
+    const store = useStore()
+    const username = ref('')
     const isLoading = ref(false)
     const error = ref('')
-    const store = useStore()
 
     const handleSubmit = async () => {
       try {
+        if (!username.value.trim()) {
+          error.value = '이름을 입력해주세요.'
+          return
+        }
+
         isLoading.value = true
         error.value = ''
 
-        // OAuth2 형식에 맞게 form-urlencoded 형식으로 데이터 전송
-        // 로그인 시도 로그 추가
-        console.log('로그인 시도:', { email: email.value })
-        
-        const formData = new URLSearchParams()
-        formData.append('username', email.value)
-        formData.append('password', password.value)
-        
-        // 로그인 요청 전송
-        const response = await auth.login(formData)
-        console.log('로그인 응답:', response.data)
-        
-        const token = response.data.access_token
-        if (!token) {
-          throw new Error('토큰이 없습니다')
-        }
-        
-        // 토큰 저장
-        localStorage.setItem('token', token)
-        
-        // 사용자 정보 요청
-        const userResponse = await auth.getCurrentUser()
-        console.log('사용자 정보:', userResponse.data)
-        
-        // 상태 관리
+        // 세션 스토리지에 사용자 이름 저장
+        sessionStorage.setItem('guestName', username.value)
+
+        // Vuex 스토어에 게스트 사용자 정보 저장
         await store.dispatch('login', {
-          user: userResponse.data,
-          token: token
+          user: {
+            username: username.value,
+            isGuest: true,
+            created_at: new Date().toISOString()
+          }
         })
-        
+
         // 네비게이션 메뉴 상태 초기화
         await store.dispatch('setMenuState', true)
-        
+
+        // 대시보드로 이동
         router.push('/dashboard')
       } catch (err) {
-        console.error('로그인 오류:', err)
-        
-        if (err.response) {
-          console.error('서버 응답:', err.response.data)
-          
-          if (err.response.status === 401) {
-            error.value = '이메일 또는 비밀번호가 올바르지 않습니다.'
-          } else if (err.response.status === 422) {
-            error.value = '입력 데이터가 유효하지 않습니다.'
-          } else if (err.response.status === 400) {
-            error.value = '비활성화된 사용자입니다.'
-          } else {
-            error.value = '서버 오류가 발생했습니다. 다시 시도해주세요.'
-          }
-        } else if (err.message === '토큰이 없습니다') {
-          error.value = '로그인에 실패했습니다. 다시 시도해주세요.'
-        } else {
-          error.value = '서버에 연결할 수 없습니다.'
-        }
+        console.error('오류:', err)
+        error.value = '오류가 발생했습니다. 다시 시도해주세요.'
       } finally {
         isLoading.value = false
       }
     }
 
     return {
-      email,
-      password,
-      rememberMe,
+      username,
       isLoading,
       error,
       handleSubmit
@@ -146,7 +103,38 @@ export default {
 </script>
 
 <style scoped>
-.login-page {
-  margin-top: 2rem;
+.welcome-page {
+  margin-top: 3rem;
+}
+
+.card {
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  border-radius: 15px 15px 0 0 !important;
+  padding: 1.5rem;
+}
+
+.card-body {
+  padding: 2rem;
+}
+
+.form-control {
+  padding: 0.75rem 1rem;
+  font-size: 1.1rem;
+  border-radius: 10px;
+}
+
+.btn-lg {
+  padding: 0.75rem 1.5rem;
+  font-size: 1.1rem;
+  border-radius: 10px;
+}
+
+.text-muted {
+  font-size: 0.9rem;
 }
 </style>
