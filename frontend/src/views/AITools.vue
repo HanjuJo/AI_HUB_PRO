@@ -146,7 +146,7 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue'
-import axios from 'axios'
+import { aiToolsApi, toolCombinationsApi } from '../services/api'
 
 export default {
   name: 'AITools',
@@ -161,6 +161,8 @@ export default {
     const selectedCombinationId = ref('')
     const newCombinationName = ref('')
     const newCombinationDescription = ref('')
+    const isLoading = ref(false)
+    const error = ref(null)
 
     // 필터링된 도구 목록
     const filteredTools = computed(() => {
@@ -187,131 +189,140 @@ export default {
 
     // 도구 목록 로드
     const loadTools = async () => {
+      isLoading.value = true
+      error.value = null
+      
       try {
-        // 실제 구현에서는 API에서 데이터를 가져옵니다
-        // const response = await axios.get('/api/v1/ai-tools/')
-        // tools.value = response.data
+        const response = await aiToolsApi.getTools()
+        tools.value = response.data
         
-        // 테스트 데이터
-        tools.value = [
-          {
-            id: 1,
-            name: 'ChatGPT',
-            description: '자연어 처리 AI 모델로 텍스트 생성 및 대화가 가능합니다.',
-            url: 'https://chat.openai.com',
-            favorite: true,
-            categories: [
-              { id: 1, name: '텍스트 생성' },
-              { id: 2, name: '콘텐츠 기획' }
-            ]
-          },
-          {
-            id: 2,
-            name: 'Midjourney',
-            description: '텍스트 프롬프트를 기반으로 고품질 이미지를 생성합니다.',
-            url: 'https://www.midjourney.com',
-            favorite: false,
-            categories: [
-              { id: 3, name: '이미지 생성' }
-            ]
-          },
-          {
-            id: 3,
-            name: 'Descript',
-            description: 'AI를 활용한 오디오 및 비디오 편집 도구입니다.',
-            url: 'https://www.descript.com',
-            favorite: true,
-            categories: [
-              { id: 4, name: '오디오 편집' },
-              { id: 5, name: '비디오 편집' }
-            ]
-          },
-          {
-            id: 4,
-            name: 'Grammarly',
-            description: 'AI 기반 문법 및 맞춤법 검사 도구입니다.',
-            url: 'https://www.grammarly.com',
-            favorite: false,
-            categories: [
-              { id: 1, name: '텍스트 생성' },
-              { id: 6, name: '교정' }
-            ]
-          },
-          {
-            id: 5,
-            name: 'Canva',
-            description: 'AI 기능이 포함된 그래픽 디자인 플랫폼입니다.',
-            url: 'https://www.canva.com',
-            favorite: false,
-            categories: [
-              { id: 3, name: '이미지 생성' },
-              { id: 7, name: '디자인' }
-            ]
-          },
-          {
-            id: 6,
-            name: 'Runway',
-            description: 'AI 기반 비디오 편집 및 생성 도구입니다.',
-            url: 'https://runwayml.com',
-            favorite: false,
-            categories: [
-              { id: 5, name: '비디오 편집' },
-              { id: 8, name: '비디오 생성' }
-            ]
-          }
-        ]
-      } catch (error) {
-        console.error('AI 도구를 가져오는 중 오류가 발생했습니다:', error)
+        // 데이터가 없을 경우 테스트 데이터 사용
+        if (!tools.value || tools.value.length === 0) {
+          tools.value = [
+            {
+              id: 1,
+              name: 'ChatGPT',
+              description: '자연어 처리 AI 모델로 텍스트 생성 및 대화가 가능합니다.',
+              url: 'https://chat.openai.com',
+              favorite: true,
+              categories: [
+                { id: 1, name: '텍스트 생성' },
+                { id: 2, name: '콘텐츠 기획' }
+              ]
+            },
+            {
+              id: 2,
+              name: 'Midjourney',
+              description: '텍스트 프롬프트를 기반으로 고품질 이미지를 생성합니다.',
+              url: 'https://www.midjourney.com',
+              favorite: false,
+              categories: [
+                { id: 3, name: '이미지 생성' }
+              ]
+            },
+            {
+              id: 3,
+              name: 'Descript',
+              description: 'AI를 활용한 오디오 및 비디오 편집 도구입니다.',
+              url: 'https://www.descript.com',
+              favorite: true,
+              categories: [
+                { id: 4, name: '오디오 편집' },
+                { id: 5, name: '비디오 편집' }
+              ]
+            },
+            {
+              id: 4,
+              name: 'Grammarly',
+              description: 'AI 기반 문법 및 맞춤법 검사 도구입니다.',
+              url: 'https://www.grammarly.com',
+              favorite: false,
+              categories: [
+                { id: 1, name: '텍스트 생성' },
+                { id: 6, name: '교정' }
+              ]
+            },
+            {
+              id: 5,
+              name: 'Canva',
+              description: 'AI 기능이 포함된 그래픽 디자인 플랫폼입니다.',
+              url: 'https://www.canva.com',
+              favorite: false,
+              categories: [
+                { id: 3, name: '이미지 생성' },
+                { id: 7, name: '디자인' }
+              ]
+            },
+            {
+              id: 6,
+              name: 'Runway',
+              description: 'AI 기반 비디오 편집 및 생성 도구입니다.',
+              url: 'https://runwayml.com',
+              favorite: false,
+              categories: [
+                { id: 5, name: '비디오 편집' },
+                { id: 8, name: '비디오 생성' }
+              ]
+            }
+          ]
+        }
+      } catch (err) {
+        console.error('AI 도구를 가져오는 중 오류가 발생했습니다:', err)
+        error.value = '도구 목록을 가져오는데 실패했습니다.'
+      } finally {
+        isLoading.value = false
       }
     }
 
     // 카테고리 목록 로드
     const loadCategories = async () => {
       try {
-        // 실제 구현에서는 API에서 데이터를 가져옵니다
-        // const response = await axios.get('/api/v1/ai-tools/categories')
-        // categories.value = response.data
+        const response = await aiToolsApi.getCategories()
+        categories.value = response.data
         
-        // 테스트 데이터
-        categories.value = [
-          { id: 1, name: '텍스트 생성' },
-          { id: 2, name: '콘텐츠 기획' },
-          { id: 3, name: '이미지 생성' },
-          { id: 4, name: '오디오 편집' },
-          { id: 5, name: '비디오 편집' },
-          { id: 6, name: '교정' },
-          { id: 7, name: '디자인' },
-          { id: 8, name: '비디오 생성' }
-        ]
-      } catch (error) {
-        console.error('카테고리를 가져오는 중 오류가 발생했습니다:', error)
+        // 데이터가 없을 경우 테스트 데이터 사용
+        if (!categories.value || categories.value.length === 0) {
+          categories.value = [
+            { id: 1, name: '텍스트 생성' },
+            { id: 2, name: '콘텐츠 기획' },
+            { id: 3, name: '이미지 생성' },
+            { id: 4, name: '오디오 편집' },
+            { id: 5, name: '비디오 편집' },
+            { id: 6, name: '교정' },
+            { id: 7, name: '디자인' },
+            { id: 8, name: '비디오 생성' }
+          ]
+        }
+      } catch (err) {
+        console.error('카테고리를 가져오는 중 오류가 발생했습니다:', err)
       }
     }
 
     // 도구 조합 목록 로드
     const loadToolCombinations = async () => {
       try {
-        // 실제 구현에서는 API에서 데이터를 가져옵니다
-        // const response = await axios.get('/api/v1/tool-combinations/me')
-        // toolCombinations.value = response.data
+        const response = await toolCombinationsApi.getCombinations()
+        toolCombinations.value = response.data
         
-        // 테스트 데이터
-        toolCombinations.value = [
-          {
-            id: 1,
-            name: '유튜브 쇼츠 제작 세트',
-            description: '유튜브 쇼츠 제작을 위한 최적의 AI 도구 조합입니다.',
-            tools: [1, 2, 3]
-          },
-          {
-            id: 2,
-            name: '블로그 콘텐츠 제작 세트',
-            description: 'SEO에 최적화된 블로그 콘텐츠 제작을 위한 AI 도구 조합입니다.',
-            tools: [1, 4, 5]
-          }
-        ]
-      } catch (error) {
-        console.error('도구 조합을 가져오는 중 오류가 발생했습니다:', error)
+        // 데이터가 없을 경우 테스트 데이터 사용
+        if (!toolCombinations.value || toolCombinations.value.length === 0) {
+          toolCombinations.value = [
+            {
+              id: 1,
+              name: '유튜브 쇼츠 제작 세트',
+              description: '유튜브 쇼츠 제작을 위한 최적의 AI 도구 조합입니다.',
+              tools: [1, 2, 3]
+            },
+            {
+              id: 2,
+              name: '블로그 콘텐츠 제작 세트',
+              description: 'SEO에 최적화된 블로그 콘텐츠 제작을 위한 AI 도구 조합입니다.',
+              tools: [1, 4, 5]
+            }
+          ]
+        }
+      } catch (err) {
+        console.error('도구 조합을 가져오는 중 오류가 발생했습니다:', err)
       }
     }
 
@@ -334,15 +345,11 @@ export default {
     // 즐겨찾기 토글
     const toggleFavorite = async (tool) => {
       try {
-        // 실제 구현에서는 API 호출
-        // await axios.post(`/api/v1/ai-tools/${tool.id}/favorite`, {
-        //   favorite: !tool.favorite
-        // })
-        
-        // 테스트 데이터 업데이트
+        // API 호출은 실제 즐겨찾기 API가 구현되었을 때 추가
+        // 임시 UI 업데이트
         tool.favorite = !tool.favorite
-      } catch (error) {
-        console.error('즐겨찾기 업데이트 중 오류가 발생했습니다:', error)
+      } catch (err) {
+        console.error('즐겨찾기 업데이트 중 오류가 발생했습니다:', err)
       }
     }
 
@@ -360,12 +367,11 @@ export default {
       try {
         if (selectedCombinationId.value) {
           // 기존 도구 조합에 추가
-          // 실제 구현에서는 API 호출
-          // await axios.post(`/api/v1/tool-combinations/${selectedCombinationId.value}/tools`, {
-          //   tool_id: selectedTool.value.id
-          // })
+          await toolCombinationsApi.updateCombination(selectedCombinationId.value, {
+            tool_ids: [...toolCombinations.value.find(c => c.id === parseInt(selectedCombinationId.value)).tools, selectedTool.value.id]
+          })
           
-          // 테스트 데이터 업데이트
+          // UI 업데이트
           const combo = toolCombinations.value.find(c => c.id === parseInt(selectedCombinationId.value))
           if (combo && !combo.tools.includes(selectedTool.value.id)) {
             combo.tools.push(selectedTool.value.id)
@@ -377,27 +383,23 @@ export default {
             return
           }
           
-          // 실제 구현에서는 API 호출
-          // const response = await axios.post('/api/v1/tool-combinations/', {
-          //   name: newCombinationName.value,
-          //   description: newCombinationDescription.value,
-          //   tools: [selectedTool.value.id]
-          // })
-          
-          // 테스트 데이터 업데이트
-          const newId = Math.max(...toolCombinations.value.map(c => c.id)) + 1
-          toolCombinations.value.push({
-            id: newId,
+          const newCombination = {
             name: newCombinationName.value,
             description: newCombinationDescription.value,
-            tools: [selectedTool.value.id]
-          })
+            tool_ids: [selectedTool.value.id]
+          }
+          
+          const response = await toolCombinationsApi.createCombination(newCombination)
+          
+          // UI 업데이트
+          toolCombinations.value.push(response.data)
         }
         
         showAddToCombinationModal.value = false
         alert('도구 조합에 추가되었습니다.')
-      } catch (error) {
-        console.error('도구 조합 업데이트 중 오류가 발생했습니다:', error)
+      } catch (err) {
+        console.error('도구 조합 업데이트 중 오류가 발생했습니다:', err)
+        alert('도구 조합 저장 중 오류가 발생했습니다.')
       }
     }
 
@@ -419,6 +421,8 @@ export default {
       selectedCombinationId,
       newCombinationName,
       newCombinationDescription,
+      isLoading,
+      error,
       filterTools,
       selectCategory,
       resetFilters,

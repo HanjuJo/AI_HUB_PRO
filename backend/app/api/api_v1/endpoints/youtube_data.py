@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -8,6 +8,7 @@ from app.api import deps
 from app.models.youtube_data import YoutubeData, YoutubeChannel, RecommendedChannel
 from app.models.user import User
 from app.core.config import settings
+from app.services.youtube_service import youtube_service
 
 # For YouTube API integration
 import googleapiclient.discovery
@@ -28,8 +29,7 @@ def get_trending_keywords(
     """
     trending_keywords = (
         db.query(YoutubeData)
-        .filter(YoutubeData.is_trending == True)
-        .order_by(YoutubeData.popularity_score.desc())
+        .order_by(YoutubeData.popularity.desc())
         .offset(skip)
         .limit(limit)
         .all()
@@ -127,20 +127,16 @@ def create_channel(
 
 @router.get("/channels/{channel_id}", response_model=schemas.youtube_data.YoutubeChannel)
 def get_channel(
-    *,
-    db: Session = Depends(deps.get_db),
     channel_id: str,
+    db: Session = Depends(deps.get_db),
     current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
-    Get YouTube channel by ID.
+    Get YouTube channel details.
     """
     channel = db.query(YoutubeChannel).filter(YoutubeChannel.channel_id == channel_id).first()
     if not channel:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Channel not found",
-        )
+        raise HTTPException(status_code=404, detail="Channel not found")
     return channel
 
 
@@ -225,3 +221,70 @@ def get_recommended_channels(
     
     recommended_channels = query.offset(skip).limit(limit).all()
     return recommended_channels
+
+
+@router.get("/recommendations/{channel_id}", response_model=List[schemas.youtube_data.RecommendedChannel])
+def get_recommended_channels(
+    channel_id: str,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Get recommended channels based on a YouTube channel.
+    """
+    recommendations = (
+        db.query(RecommendedChannel)
+        .filter(RecommendedChannel.source_channel_id == channel_id)
+        .all()
+    )
+    return recommendations
+
+
+@router.post("/analyze", response_model=Dict[str, Any])
+async def analyze_youtube_channel(
+    data: Dict[str, str],
+    current_user: User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    분석할 유튜브 채널 URL을 받아 채널 통계 및 비디오 분석 결과를 반환합니다.
+    """
+    channel_url = data.get("channel_url")
+    if not channel_url:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="채널 URL이 제공되지 않았습니다."
+        )
+    
+    # 채널 분석 실행
+    analysis_result = youtube_service.analyze_channel(channel_url)
+    
+    if "error" in analysis_result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=analysis_result["error"]
+        )
+    
+    return analysis_result
+
+
+@router.get("/recommendations", response_model=List[Dict[str, Any]])
+async def get_channel_recommendations(
+    channel_id: str,
+    max_results: int = 10,
+    current_user: User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    유튜브 채널 ID를 기반으로 유사한 채널을 추천합니다.
+    """
+    if not channel_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="채널 ID가 제공되지 않았습니다."
+        )
+    
+    recommendations = youtube_service.get_channel_recommendations(channel_id, max_results)
+    
+    if not recommendations:
+        return []
+    
+    return recommendations

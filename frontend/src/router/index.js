@@ -10,6 +10,13 @@ const AITools = () => import('../views/AITools.vue')
 const ToolCombinations = () => import('../views/ToolCombinations.vue')
 const YoutubeAnalysis = () => import('../views/YoutubeAnalysis.vue')
 const Support = () => import('../views/Support.vue')
+const ChoiceHelper = () => import('../views/ChoiceHelper.vue')
+const DailyFortune = () => import('../views/DailyFortune.vue')
+const Naming = () => import('../views/Naming.vue')
+const FortuneLove = () => import('../views/FortuneLove.vue')
+const FortuneMoney = () => import('../views/FortuneMoney.vue')
+const FortuneBusiness = () => import('../views/FortuneBusiness.vue')
+const FortuneHealth = () => import('../views/FortuneHealth.vue')
 
 const NotFound = () => import('../views/NotFound.vue')
 
@@ -60,6 +67,48 @@ const routes = [
     path: '/support',
     name: 'Support',
     component: Support
+  },
+  {
+    path: '/choice-helper',
+    name: 'ChoiceHelper',
+    component: ChoiceHelper,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/daily-fortune',
+    name: 'DailyFortune',
+    component: DailyFortune,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/naming',
+    name: 'Naming',
+    component: Naming,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/fortune/love',
+    name: 'FortuneLove',
+    component: FortuneLove,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/fortune/money',
+    name: 'FortuneMoney',
+    component: FortuneMoney,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/fortune/business',
+    name: 'FortuneBusiness',
+    component: FortuneBusiness,
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/fortune/health',
+    name: 'FortuneHealth',
+    component: FortuneHealth,
+    meta: { requiresAuth: false }
   },
   {
     path: '/:pathMatch(.*)*',

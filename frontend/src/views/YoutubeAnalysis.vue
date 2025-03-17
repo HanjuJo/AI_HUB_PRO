@@ -8,13 +8,13 @@
         <div class="row">
           <div class="col-md-8 mx-auto">
             <div class="input-group mb-3">
-              <input 
-                type="text" 
+            <input 
+              type="text" 
                 class="form-control form-control-lg"
                 v-model="channelUrl"
                 placeholder="유튜브 채널 URL을 입력하세요"
-                @keyup.enter="analyzeChannel"
-              >
+              @keyup.enter="analyzeChannel"
+            >
               <button 
                 class="btn btn-primary btn-lg"
                 @click="analyzeChannel"
@@ -22,7 +22,7 @@
               >
                 <i class="bi" :class="isAnalyzing ? 'bi-hourglass-split' : 'bi-search'"></i>
                 {{ isAnalyzing ? '분석 중...' : '분석하기' }}
-              </button>
+            </button>
             </div>
             <div class="form-text text-center">
               예시: https://www.youtube.com/@example
@@ -52,20 +52,20 @@
                 <div class="stat-item">
                   <div class="h4 mb-0">{{ formatNumber(channelData.subscriberCount) }}</div>
                   <div class="text-muted">구독자</div>
-                </div>
+        </div>
                 <div class="stat-item">
                   <div class="h4 mb-0">{{ formatNumber(channelData.videoCount) }}</div>
                   <div class="text-muted">총 영상</div>
-                </div>
+      </div>
                 <div class="stat-item">
                   <div class="h4 mb-0">{{ formatNumber(channelData.viewCount) }}</div>
                   <div class="text-muted">총 조회수</div>
-                </div>
+      </div>
+              </div>
+            </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
       <!-- 성장 분석 -->
       <div class="row mb-4">
@@ -73,12 +73,12 @@
           <div class="card h-100">
             <div class="card-header">
               <h5 class="card-title mb-0">구독자 성장 추이</h5>
-            </div>
+                  </div>
             <div class="card-body">
               <canvas ref="subscriberChart"></canvas>
-            </div>
-          </div>
-        </div>
+                    </div>
+                  </div>
+                </div>
         <div class="col-md-6">
           <div class="card h-100">
             <div class="card-header">
@@ -86,10 +86,10 @@
             </div>
             <div class="card-body">
               <canvas ref="viewsChart"></canvas>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
       <!-- 콘텐츠 분석 -->
       <div class="content-analysis card mb-4">
@@ -124,7 +124,7 @@
                   </small>
                 </a>
               </div>
-            </div>
+              </div>
             <div class="col-md-6">
               <!-- 주요 키워드 -->
               <h6 class="mb-3">주요 키워드</h6>
@@ -146,9 +146,9 @@
                 <canvas ref="uploadPatternChart"></canvas>
               </div>
             </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
       <!-- AI 추천 -->
       <div class="ai-recommendations card">
@@ -188,180 +188,160 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
+import axios from 'axios'
 import Chart from 'chart.js/auto'
 
 export default {
   name: 'YoutubeAnalysis',
   setup() {
     const channelUrl = ref('')
-    const channelData = ref(null)
     const isAnalyzing = ref(false)
     const error = ref(null)
-    const subscriberChart = ref(null)
+    const channelData = ref(null)
+    const topVideos = ref([])
+    const popularTags = ref([])
     const viewsChart = ref(null)
     const uploadPatternChart = ref(null)
-
-    // 테스트 데이터
-    const topVideos = ref([
-      {
-        id: 'abc123',
-        title: '가장 인기있는 영상',
-        description: '이 영상은 채널에서 가장 높은 조회수를 기록했습니다.',
-        views: 1500000,
-        likes: 50000,
-        comments: 3000
-      },
-      // ... 더 많은 비디오 데이터
-    ])
-
-    const keywords = ref([
-      { text: '프로그래밍', weight: 1.0 },
-      { text: '인공지능', weight: 0.8 },
-      { text: '데이터 분석', weight: 0.6 },
-      // ... 더 많은 키워드
-    ])
-
-    const recommendations = ref([
-      {
-        icon: 'bi bi-graph-up',
-        title: '조회수 개선',
-        description: '썸네일 최적화와 SEO 개선을 통해 조회수를 높일 수 있습니다.'
-      },
-      {
-        icon: 'bi bi-people',
-        title: '시청자 참여',
-        description: '댓글 응답률을 높여 시청자 참여도를 개선하세요.'
-      },
-      {
-        icon: 'bi bi-calendar-check',
-        title: '업로드 일정',
-        description: '화요일과 목요일 저녁에 업로드하면 더 많은 시청자에게 도달할 수 있습니다.'
-      }
-    ])
+    const videoCharts = ref({})
 
     const analyzeChannel = async () => {
       if (!channelUrl.value) {
-        error.value = '채널 URL을 입력해주세요.'
+        error.value = '유튜브 채널 URL을 입력해주세요.'
         return
       }
-
+      
       isAnalyzing.value = true
       error.value = null
-
+      channelData.value = null
+      topVideos.value = []
+      
       try {
-        // API 호출 및 데이터 처리
-        // const response = await axios.post('/api/v1/youtube/analyze', {
-        //   channelUrl: channelUrl.value
-        // })
+        const response = await axios.post('/youtube/analyze', {
+          channel_url: channelUrl.value
+        })
         
-        // 테스트 데이터
-        channelData.value = {
-          thumbnail: 'https://example.com/channel-thumbnail.jpg',
-          title: '테스트 채널',
-          description: '프로그래밍과 인공지능에 대해 다루는 채널입니다.',
-          subscriberCount: 100000,
-          videoCount: 200,
-          viewCount: 5000000
+        if (response.data && response.data.channel) {
+          // 채널 데이터 설정
+          channelData.value = response.data.channel
+          
+          // 비디오 데이터 설정
+          topVideos.value = response.data.videos || []
+          
+          // 분석 데이터 설정
+          if (response.data.analysis) {
+            if (response.data.analysis.popularTags) {
+              popularTags.value = response.data.analysis.popularTags
+            }
+            
+            if (response.data.analysis.mostViewed) {
+              // 가장 많이 본 비디오를 topVideos로 설정
+              topVideos.value = response.data.analysis.mostViewed
+            }
+          }
+          
+          // 차트 초기화
+          await nextTick()
+          initializeCharts()
+        } else {
+          error.value = '채널 데이터를 가져오는데 실패했습니다.'
         }
-
-        // 차트 초기화
-        initializeCharts()
       } catch (err) {
-        error.value = '채널 분석 중 오류가 발생했습니다. 다시 시도해주세요.'
-        console.error('Channel analysis error:', err)
+        console.error('채널 분석 오류:', err)
+        error.value = err.response?.data?.detail || '채널 분석 중 오류가 발생했습니다.'
       } finally {
         isAnalyzing.value = false
       }
     }
 
     const initializeCharts = () => {
-      // 구독자 성장 차트
-      if (subscriberChart.value) {
-        new Chart(subscriberChart.value, {
-          type: 'line',
-          data: {
-            labels: ['1월', '2월', '3월', '4월', '5월', '6월'],
-            datasets: [{
-              label: '구독자 수',
-              data: [80000, 85000, 87000, 90000, 95000, 100000],
-              borderColor: 'rgb(75, 192, 192)',
-              tension: 0.1
-            }]
-          }
-        })
+      renderViewsChart()
+      renderUploadPatternChart()
+    }
+
+    const renderViewsChart = () => {
+      const ctx = document.getElementById('viewsChart')
+      if (!ctx || !topVideos.value || topVideos.value.length === 0) return
+
+      if (videoCharts.value?.viewsChart) {
+        videoCharts.value.viewsChart.destroy()
       }
 
-      // 조회수 차트
-      if (viewsChart.value) {
-        new Chart(viewsChart.value, {
-          type: 'bar',
-          data: {
-            labels: ['1월', '2월', '3월', '4월', '5월', '6월'],
-            datasets: [{
-              label: '월간 조회수',
-              data: [800000, 850000, 900000, 950000, 1000000, 1100000],
-              backgroundColor: 'rgba(54, 162, 235, 0.5)'
-            }]
-          }
-        })
+      const chartData = {
+        labels: topVideos.value.slice(0, 5).map(video => truncateTitle(video.title)),
+          datasets: [{
+          label: '조회수',
+          data: topVideos.value.slice(0, 5).map(video => video.viewCount),
+          backgroundColor: 'rgba(54, 162, 235, 0.6)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 1
+        }]
       }
 
-      // 업로드 패턴 차트
-      if (uploadPatternChart.value) {
-        new Chart(uploadPatternChart.value, {
-          type: 'radar',
-          data: {
-            labels: ['월', '화', '수', '목', '금', '토', '일'],
-            datasets: [{
-              label: '업로드 빈도',
-              data: [3, 5, 2, 4, 3, 1, 2],
-              backgroundColor: 'rgba(255, 99, 132, 0.2)',
-              borderColor: 'rgb(255, 99, 132)'
-            }]
+      videoCharts.value.viewsChart = new Chart(ctx, {
+        type: 'bar',
+        data: chartData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            title: {
+              display: true,
+              text: '인기 영상 조회수'
+            },
+            tooltip: {
+              callbacks: {
+                title: (items) => {
+                  const index = items[0].dataIndex
+                  return topVideos.value[index].title
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
           }
-        })
-      }
+        }
+      })
+    }
+
+    const renderUploadPatternChart = () => {
+      // ... 기존 차트 렌더링 코드 유지 ...
+    }
+
+    const truncateTitle = (title, maxLength = 20) => {
+      if (!title) return ''
+      return title.length > maxLength ? title.substring(0, maxLength) + '...' : title
     }
 
     const formatNumber = (num) => {
-      if (num >= 1000000) {
-        return (num / 1000000).toFixed(1) + 'M'
-      } else if (num >= 1000) {
-        return (num / 1000).toFixed(1) + 'K'
-      }
-      return num.toString()
+      if (num === undefined || num === null) return '0'
+      return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
     }
 
-    const getKeywordClass = (weight) => {
-      if (weight >= 0.8) return 'bg-primary'
-      if (weight >= 0.6) return 'bg-info'
-      return 'bg-secondary'
+    const formatDate = (dateString) => {
+      if (!dateString) return ''
+      const date = new Date(dateString)
+      return date.toLocaleDateString('ko-KR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
     }
-
-    const getKeywordSize = (weight) => {
-      return (0.8 + weight) + 'rem'
-    }
-
-    onMounted(() => {
-      // 차트 초기화
-    })
 
     return {
       channelUrl,
-      channelData,
       isAnalyzing,
       error,
-      subscriberChart,
-      viewsChart,
-      uploadPatternChart,
+      channelData,
       topVideos,
-      keywords,
-      recommendations,
+      popularTags,
       analyzeChannel,
       formatNumber,
-      getKeywordClass,
-      getKeywordSize
+      formatDate,
+      truncateTitle
     }
   }
 }
